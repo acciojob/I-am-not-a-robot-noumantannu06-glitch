@@ -1,18 +1,20 @@
-//your code here
-// Images: use 5 unique + 1 duplicate (any image repeated once)
-const imagePaths = [
-  "https://placehold.co/300x200/FF5733/FFFFFF?text=Image+1",
-  "https://placehold.co/300x200/33C4FF/FFFFFF?text=Image+2",
-  "https://placehold.co/300x200/33FF57/FFFFFF?text=Image+3",
-  "https://placehold.co/300x200/F3FF33/000000?text=Image+4",
-  "https://placehold.co/300x200/9933FF/FFFFFF?text=Image+5"
-];
+// Base tile IDs we care about (Cypress uses .img1, .img2, ...)
+const baseKeys = ["img1", "img2", "img3", "img4", "img5"];
 
-// 1) Pick one image to repeat (index 0–4) and create 6‑item array
-function createImageList() {
+// Example image URLs (change if you want different images)
+const keyToSrc = {
+  img1: "https://placehold.co/300x200/FF5733/FFFFFF?text=Image+1",
+  img2: "https://placehold.co/300x200/33C4FF/FFFFFF?text=Image+2",
+  img3: "https://placehold.co/300x200/33FF57/FFFFFF?text=Image+3",
+  img4: "https://placehold.co/300x200/F3FF33/000000?text=Image+4",
+  img5: "https://placehold.co/300x200/9933FF/FFFFFF?text=Image+5"
+};
+
+// 1) Pick one key to repeat → 6 tiles total
+function createKeyList() {
   const copyIndex = Math.floor(Math.random() * 5); // 0–4
-  const list = [...imagePaths];
-  list.push(imagePaths[copyIndex]); // one duplicate
+  const list = [...baseKeys];
+  list.push(baseKeys[copyIndex]);
   return list;
 }
 
@@ -26,41 +28,41 @@ function shuffle(arr) {
 }
 
 // 3) State variables
-let clickedImages = [];   // [{ imgElem, dataNsTest }]
-let resetBtn, verifyBtn, hMsg, resultPara;
+let clickedImages = [];   // [{ img, key: img1|img2|... }]
+let resetBtn, verifyBtn, resultPara;
 
+// 4) Render six images (one duplicate, shuffled)
 function renderImages() {
-  const imageList = createImageList();
-  const shuffledList = shuffle(imageList);
+  const keys = createKeyList();
+  const shuffledKeys = shuffle(keys);
   const container = document.getElementById("image-container");
-  container.innerHTML = ""; // clear old images
+  container.innerHTML = "";
 
-  // Generate 6 img elements with data-ns-test
-  shuffledList.forEach(src => {
+  shuffledKeys.forEach(key => {
     const img = document.createElement("img");
-    img.src = src;
+    img.src = keyToSrc[key];
     img.alt = "Tile";
-    img.dataset.nsTest = src; // this is how we identify “same tile”
+    img.dataset.nsTest = key;      // required by task
+    img.classList.add(key);        // so Cypress finds .img1, .img2, ...
     img.addEventListener("click", handleImageClick);
     container.appendChild(img);
   });
 }
 
-// 4) Click handler for images
+// 5) Image click handler
 function handleImageClick(e) {
   const img = e.target;
 
-  // Ignore if already clicked or same image twice
+  // Do nothing on already‑selected image (no double‑click allowed)
   if (img.classList.contains("selected")) return;
 
-  // Mark as selected
   img.classList.add("selected");
-  clickedImages.push({ img, dataNsTest: img.dataset.nsTest });
+  clickedImages.push({ img, key: img.dataset.nsTest });
 
-  // Show Reset button once at least one tile is clicked
+  // Show Reset once at least one tile is clicked
   resetBtn.classList.remove("hidden");
 
-  // Show Verify button only after exactly two distinct images
+  // Verify only shows when exactly two images are clicked
   if (clickedImages.length === 2) {
     verifyBtn.classList.remove("hidden");
   } else if (clickedImages.length > 2) {
@@ -68,45 +70,41 @@ function handleImageClick(e) {
   }
 }
 
-// 5) Reset button click
+// 6) Reset button click → State 1
 function handleReset() {
-  // Unselect images
   clickedImages.forEach(({ img }) => img.classList.remove("selected"));
   clickedImages = [];
 
-  // Reset UI
   resetBtn.classList.add("hidden");
   verifyBtn.classList.add("hidden");
   resultPara.textContent = "";
 }
 
-// 6) Verify button click
+// 7) Verify button click → State 4
 function handleVerify() {
   const [a, b] = clickedImages;
-
-  // Must be two different images
-  const isIdentical = a.dataNsTest === b.dataNsTest;
+  const isIdentical = a.key === b.key;
 
   verifyBtn.classList.add("hidden");
+
   resultPara.textContent = isIdentical
     ? "You are a human. Congratulations!"
     : "We can't verify you as a human. You selected the non-identical tiles.";
 }
 
-// 7) Initialize everything
+// 8) Initialize on page load
 function init() {
   renderImages();
 
   resetBtn = document.getElementById("reset");
   verifyBtn = document.getElementById("verify");
-  hMsg = document.getElementById("h");
   resultPara = document.getElementById("para");
 
   resetBtn.classList.add("hidden");
   verifyBtn.classList.add("hidden");
 
   resetBtn.addEventListener("click", handleReset);
-  verifyBtn.addEventListener("click", handleVerify);
+  verifyBtn.addEventListener("click", handleVerify");
 }
 
 window.addEventListener("load", init);
