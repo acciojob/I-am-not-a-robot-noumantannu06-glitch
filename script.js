@@ -1,119 +1,128 @@
-// scripts.js - "I'm not a robot" Verification System
+// scripts.js - Fixed "I'm not a robot" for Cypress tests
 
-// Get DOM elements
-const h3 = document.getElementById('h');
-const para = document.getElementById('para');
+// DOM Elements - Fixed selectors for Cypress tests
+const messageEl = document.getElementById('h');
+const resultEl = document.getElementById('para');
 const resetBtn = document.getElementById('reset');
 const verifyBtn = document.getElementById('verify');
-const images = document.querySelectorAll('.grid img');
+const img1 = document.querySelector('.img1');
+const img2 = document.querySelector('.img2');
+const img3 = document.querySelector('.img3');
+const img4 = document.querySelector('.img4');
+const img5 = document.querySelector('.img5');
+const img6 = document.querySelector('.img6');
 
-// Image sources (5 unique + 1 duplicate will be created)
-const imageSources = [
-  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=150',
-  'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=150', 
-  'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150',
-  'https://images.unsplash.com/photo-1544194152-7adf22b5c1a5?w=150',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
+// Fixed image sources that work reliably
+const imageUrls = [
+  'https://picsum.photos/150/150?random=1',
+  'https://picsum.photos/150/150?random=2',
+  'https://picsum.photos/150/150?random=3',
+  'https://picsum.photos/150/150?random=4',
+  'https://picsum.photos/150/150?random=5'
 ];
 
 // Game state
-let clickedImages = [];
-let duplicateIndex = -1; // Which image is duplicated
+let selectedImages = [];
+let shuffledImages = [];
 
-// Initialize game
-function initGame() {
-  // Reset state
-  clickedImages = [];
-  duplicateIndex = Math.floor(Math.random() * imageSources.length);
+// Initialize game immediately
+function initializeGame() {
+  // Select random image to duplicate
+  const duplicateIndex = Math.floor(Math.random() * 5);
   
-  // Create 6 images: 5 unique + 1 duplicate
-  const shuffledImages = [...imageSources];
-  shuffledImages.push(imageSources[duplicateIndex]); // Add duplicate
+  // Create 6 images (5 unique + 1 duplicate)
+  shuffledImages = [...imageUrls, imageUrls[duplicateIndex]];
   
-  // Shuffle array
+  // Shuffle using Fisher-Yates
   for (let i = shuffledImages.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffledImages[i], shuffledImages[j]] = [shuffledImages[j], shuffledImages[i]];
   }
   
-  // Set image sources
-  images.forEach((img, index) => {
-    img.src = shuffledImages[index];
-    img.classList.remove('selected');
-    img.onclick = handleImageClick;
-  });
+  // Assign images IMMEDIATELY (for Cypress)
+  img1.src = shuffledImages[0];
+  img2.src = shuffledImages[1];
+  img3.src = shuffledImages[2];
+  img4.src = shuffledImages[3];
+  img5.src = shuffledImages[4];
+  img6.src = shuffledImages[5];
   
-  // Reset UI to initial state
-  setState1();
+  // Reset visual state
+  resetVisualState();
+  setInitialState();
 }
 
-// State 1: Initial state (no clicks)
-function setState1() {
-  h3.textContent = "Please click on the identical tiles to verify that you are not a robot.";
-  para.textContent = "";
+// Reset visual state (remove selected classes)
+function resetVisualState() {
+  img1.classList.remove('selected');
+  img2.classList.remove('selected');
+  img3.classList.remove('selected');
+  img4.classList.remove('selected');
+  img5.classList.remove('selected');
+  img6.classList.remove('selected');
+}
+
+// Set initial state (State 1)
+function setInitialState() {
+  messageEl.textContent = "Please click on the identical tiles to verify that you are not a robot.";
+  resultEl.textContent = "";
   resetBtn.style.display = 'none';
   verifyBtn.style.display = 'none';
+  selectedImages = [];
 }
 
-// State 2: 1+ clicks (show Reset)
-function setState2() {
-  resetBtn.style.display = 'inline-block';
-  verifyBtn.style.display = 'none';
-}
-
-// State 3: Exactly 2 clicks (show Verify)
-function setState3() {
-  resetBtn.style.display = 'inline-block';
-  verifyBtn.style.display = 'inline-block';
-}
-
-// Handle image click
-function handleImageClick(e) {
-  const img = e.target;
-  
-  // Prevent clicking same image twice
+// Handle image clicks
+function handleClick(event) {
+  const img = event.target;
   if (img.classList.contains('selected')) return;
   
-  // Add to clicked images
   img.classList.add('selected');
-  clickedImages.push(img.src);
+  selectedImages.push(img.src);
   
-  // Update state
-  if (clickedImages.length === 1) {
-    setState2();
-  } else if (clickedImages.length === 2) {
-    setState3();
+  if (selectedImages.length === 1) {
+    resetBtn.style.display = 'inline-block';
+  } else if (selectedImages.length === 2) {
+    verifyBtn.style.display = 'inline-block';
   }
 }
 
-// Reset button handler
+// Reset handler
 resetBtn.onclick = function() {
-  clickedImages = [];
-  images.forEach(img => img.classList.remove('selected'));
-  setState1();
-};
-
-// Verify button handler
-verifyBtn.onclick = function() {
-  const areIdentical = clickedImages[0] === clickedImages[1];
-  
-  if (areIdentical) {
-    para.textContent = "You are a human. Congratulations!";
-    para.style.color = 'green';
-  } else {
-    para.textContent = "We can't verify you as a human. You selected the non-identical tiles.";
-    para.style.color = 'red';
-  }
-  
-  // Hide buttons, reset clicked state
+  selectedImages = [];
+  resetVisualState();
   resetBtn.style.display = 'none';
   verifyBtn.style.display = 'none';
-  clickedImages = [];
+  messageEl.textContent = "Please click on the identical tiles to verify that you are not a robot.";
+  resultEl.textContent = "";
 };
 
-// Initialize on page load
-initGame();
+// Verify handler
+verifyBtn.onclick = function() {
+  const match = selectedImages[0] === selectedImages[1];
+  
+  if (match) {
+    resultEl.textContent = "You are a human. Congratulations!";
+    resultEl.style.color = 'green';
+  } else {
+    resultEl.textContent = "We can't verify you as a human. You selected the non-identical tiles.";
+    resultEl.style.color = 'red';
+  }
+  
+  resetBtn.style.display = 'none';
+  verifyBtn.style.display = 'none';
+};
 
-// Re-initialize on page reload/refresh detection (bonus)
-window.addEventListener('load', initGame);
-window.addEventListener('pageshow', initGame);
+// Attach event listeners
+img1.onclick = handleClick;
+img2.onclick = handleClick;
+img3.onclick = handleClick;
+img4.onclick = handleClick;
+img5.onclick = handleClick;
+img6.onclick = handleClick;
+
+// Initialize IMMEDIATELY on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeGame);
+} else {
+  initializeGame();
+}
