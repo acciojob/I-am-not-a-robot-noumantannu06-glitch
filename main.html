@@ -10,22 +10,21 @@
   <body>
     <main>
       <!-- solution start -->
-     <div class="grid">
-    <img src="" alt="tile1">
-    <img src="" alt="tile2">
-    <img src="" alt="tile3">
-    <img src="" alt="tile4">
-    <img src="" alt="tile5">
-    <img src="" alt="tile6">
-  </div>
-  
-  <h3 id="h">Please click on the identical tiles to verify that you are not a robot.</h3>
-  <p id="para"></p>
-  
-  <div class="buttons">
-    <button id="reset">Reset</button>
-    <button id="verify">Verify</button>
-  </div>
+		<div class="container">
+        <h3 id="h">Please click on the identical tiles to verify that you are not a robot.</h3>
+        
+        <div class="images-grid" id="grid">
+            <!-- Images populated by JS -->
+        </div>
+        
+        <div class="buttons">
+            <button id="reset" class="hidden">Reset</button>
+            <button id="verify" class="hidden">Verify</button>
+        </div>
+        
+        <p id="para"></p>
+    </div>
+
 
       <!-- solution end -->
     </main>
